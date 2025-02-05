@@ -4,6 +4,7 @@ import csv
 import copy
 import argparse
 import itertools
+import pyautogui
 from collections import Counter
 from collections import deque
 
@@ -45,12 +46,18 @@ def main():
     cap_device = args.device
     cap_width = args.width
     cap_height = args.height
+    screen_width, screen_height = pyautogui.size() #FJ: added this line
+    aspect_ratio = 16/10 ### change this to 16/9 if you have a 16:9 monitor #FJ added this line
+
+    downclick = False #FJ added this line
+
 
     use_static_image_mode = args.use_static_image_mode
     min_detection_confidence = args.min_detection_confidence
     min_tracking_confidence = args.min_tracking_confidence
 
     use_brect = True
+
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
@@ -69,7 +76,8 @@ def main():
     keypoint_classifier = KeyPointClassifier()
 
     point_history_classifier = PointHistoryClassifier()
-
+    ########
+    ########
     # Read labels ###########################################################
     with open('model/keypoint_classifier/keypoint_classifier_label.csv',
               encoding='utf-8-sig') as f:
@@ -143,6 +151,32 @@ def main():
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
+                    pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
+                
+                if hand_sign_id == 3:  # OK sign #FJ added this line
+                    if downclick == False:
+                        pyautogui.mouseDown()
+                        pyautogui.PAUSE = 0.2
+                        downclick = True
+                    pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
+                if hand_sign_id != 3:
+                    pyautogui.mouseUp()
+                    downclick = False
+
+                if hand_sign_id == 4:  # Back sign #FJ added this line
+                    pyautogui.hotkey('alt', 'left')
+                    pyautogui.PAUSE = 0.2
+                if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
+                    pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
+                    pyautogui.PAUSE = 0.2
+                if hand_sign_id == 6:  # Copy #FJ added this line
+                    pyautogui.hotkey('ctrl', 'c')
+                    pyautogui.PAUSE = 0.2
+                if hand_sign_id == 7: # Paste / Peace sign #FJ added this line
+                    pyautogui.hotkey('ctrl', 'v')
+                    pyautogui.PAUSE = 0.2
+
+
                 else:
                     point_history.append([0, 0])
 
