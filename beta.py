@@ -8,6 +8,12 @@ import pyautogui
 from collections import Counter
 from collections import deque
 
+import time
+import win32api
+import win32con
+import ctypes
+import ctypes.wintypes
+
 import cv2 as cv
 import numpy as np
 import mediapipe as mp
@@ -38,6 +44,13 @@ def get_args():
 
     return args
 
+def clickDown(x,y):
+    win32api.SetCursorPos((x,y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
+
+def clickUp(x,y):
+    win32api.SetCursorPos((x,y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
 
 def main():
     # Argument parsing #################################################################
@@ -73,9 +86,9 @@ def main():
         min_tracking_confidence=min_tracking_confidence,
     )
 
-    keypoint_classifier = KeyPointClassifier()
+    keypoint_classifier = KeyPointClassifier() # static gestures
 
-    point_history_classifier = PointHistoryClassifier()
+    point_history_classifier = PointHistoryClassifier() #dynamic gestures 
     ########
     ########
     # Read labels ###########################################################
@@ -97,9 +110,9 @@ def main():
     cvFpsCalc = CvFpsCalc(buffer_len=10)
 
     # Coordinate history #################################################################
-    history_length = 16
+    history_length = 16 # FJ behöver kanske träna om modellen med en annan history length
     point_history = deque(maxlen=history_length)
-
+    
     # Finger gesture history ################################################
     finger_gesture_history = deque(maxlen=history_length)
 
@@ -129,6 +142,7 @@ def main():
         results = hands.process(image)
         image.flags.writeable = True
 
+
         #  ####################################################################
         if results.multi_hand_landmarks is not None:
             for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
@@ -149,36 +163,49 @@ def main():
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+
+                Xpos = (landmark_list[8][0]/cap_width)*aspect_ratio*screen_width
+                Ypos = (landmark_list[8][1]/cap_height)*screen_height
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
-                    pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
+                    ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+                    #pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
+                    #pyautogui.sleep(0.01) #FJ added this line
                 
                 if hand_sign_id == 3:  # OK sign #FJ added this line
                     if downclick == False:
-                        pyautogui.mouseDown()
-                        #pyautogui.PAUSE = 0.2
+                        convertedX = 65536 * Xpos // screen_width + 1
+                        convertedY = 65536 * Ypos // screen_height + 1
+                        clickDown(int(Xpos), int(Ypos))
+                        #clickDown(convertedX, convertedY) #FJ added this line
                         downclick = True
-                    pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
-                if hand_sign_id != 3:
-                    pyautogui.mouseUp()
+                    ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+                    
+                if hand_sign_id != 3 and downclick == True: #FJ added this line                           
+                    convertedX = 65536 * Xpos // screen_width + 1
+                    convertedY = 65536 * Ypos // screen_height + 1
+                    clickUp(int(Xpos), int(Ypos))
+                    #clickUp(convertedX, convertedY) #FJ added this line
                     downclick = False
 
+                
                 if hand_sign_id == 4:  # Back sign #FJ added this line
                     pyautogui.hotkey('alt', 'left')
-                    #pyautogui.PAUSE = 0.2
+                    pyautogui.PAUSE = 0.2
                 if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
                     pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
                     #pyautogui.PAUSE = 0.2
                 if hand_sign_id == 6:  # Copy #FJ added this line
                     pyautogui.hotkey('ctrl', 'c')
-                    #pyautogui.PAUSE = 0.2
+                    pyautogui.PAUSE = 0.2
                 if hand_sign_id == 7: # Paste / Peace sign #FJ added this line
                     pyautogui.hotkey('ctrl', 'v')
-                    #pyautogui.PAUSE = 0.2
+                    pyautogui.PAUSE = 0.2
+
+                
 
 
-                else:
-                    point_history.append([0, 0])
+
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -193,8 +220,7 @@ def main():
                     finger_gesture_history).most_common()
 
                 # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
+
                 debug_image = draw_info_text(
                     debug_image,
                     brect,
@@ -327,8 +353,34 @@ def logging_csv(number, mode, landmark_list, point_history_list):
             writer.writerow([number, *point_history_list])
     return
 
+def draw_info_text(image, brect, handedness, hand_sign_text,
+                   finger_gesture_text):
+    cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
+                 (0, 0, 0), -1)
+
+    info_text = handedness.classification[0].label[0:]
+    if hand_sign_text != "":
+        info_text = info_text + ':' + hand_sign_text
+    cv.putText(image, info_text, (brect[0] + 5, brect[1] - 4),
+               cv.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv.LINE_AA)
+
+    if finger_gesture_text != "":
+        cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 0), 4, cv.LINE_AA)
+        cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
+                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
+                   cv.LINE_AA)
+
+    return image
 
 
+def draw_point_history(image, point_history):
+    for index, point in enumerate(point_history):
+        if point[0] != 0 and point[1] != 0:
+            cv.circle(image, (point[0], point[1]), 1 + int(index / 2),
+                      (152, 251, 152), 2)
+
+    return image
 
 
 def draw_info(image, fps, mode, number):
