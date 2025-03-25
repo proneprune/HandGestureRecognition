@@ -4,10 +4,10 @@ import numpy as np
 import tensorflow as tf
 
 
-class PointHistoryClassifier(object):
+class SkelettHistoryClassifier(object):
     def __init__(
         self,
-        model_path='model/point_history_classifier/point_history_classifier.tflite',
+        model_path='model/point_history_classifier/skelett_history_classifier.tflite',
         score_th=0.5,
         invalid_value=0,
         num_threads=1,
@@ -24,12 +24,12 @@ class PointHistoryClassifier(object):
 
     def __call__(
         self,
-        point_history,
+        skelett_history,
     ):
         input_details_tensor_index = self.input_details[0]['index']
         self.interpreter.set_tensor(
             input_details_tensor_index,
-            np.array([point_history], dtype=np.float32))
+            np.array([skelett_history], dtype=np.float32))
         self.interpreter.invoke()
 
         output_details_tensor_index = self.output_details[0]['index']

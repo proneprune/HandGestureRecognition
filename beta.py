@@ -113,6 +113,13 @@ def main():
         point_history_classifier_labels = [
             row[0] for row in point_history_classifier_labels
         ]
+    with open(
+            'model/point_history_classifier/skelett_history_classifier_label.csv',
+            encoding='utf-8-sig') as f:
+        skelett_history_classifier_labels = csv.reader(f)
+        skelett_history_classifier_labels = [
+            row[0] for row in skelett_history_classifier_labels
+        ]    
 
     # FPS Measurement ########################################################
     cvFpsCalc = CvFpsCalc(buffer_len=10)
@@ -124,6 +131,8 @@ def main():
     # Finger gesture history ################################################
     finger_gesture_history = deque(maxlen=history_length)
 
+    # Skelett gesture history ################################################
+    skelett_history = deque([[]], maxlen=history_length)
     #  ########################################################################
     mode = 0
 
@@ -165,6 +174,8 @@ def main():
                     landmark_list)
                 pre_processed_point_history_list = pre_process_point_history(
                     debug_image, point_history)
+                pre_processed_skelett_history_list = pre_process_skelett_history(
+                    debug_image, skelett_history)
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list,
                             pre_processed_point_history_list)
@@ -174,6 +185,9 @@ def main():
 
                 Xpos = (landmark_list[8][0]/cap_width)*aspect_ratio*screen_width
                 Ypos = (landmark_list[8][1]/cap_height)*screen_height
+
+                # Skelett gesture classification
+                skelett_gesture_id = skelett_gesture_id(pre_processed_skelett_history_list)
                 
                 
                 
@@ -263,6 +277,8 @@ def select_mode(key, mode):
         mode = 1
     if key == 104:  # h
         mode = 2
+    if key == 109:  # m #Added for gesture mode #FJ
+        mode = 3 
     return number, mode
 
 
@@ -327,6 +343,28 @@ def pre_process_landmark(landmark_list):
     return temp_landmark_list
 
 
+def pre_process_skelett_history(image, point_history):
+    image_width, image_height = image.shape[1], image.shape[0]
+
+    temp_point_history = copy.deepcopy(point_history)
+
+    # Convert to relative coordinates
+    base_x, base_y = 0, 0
+    for index, point in enumerate(temp_point_history):
+        if index == 0:
+            base_x, base_y = point[0], point[1]
+
+        temp_point_history[index][0] = (temp_point_history[index][0] -
+                                        base_x) / image_width
+        temp_point_history[index][1] = (temp_point_history[index][1] -
+                                        base_y) / image_height
+
+    # Convert to a one-dimensional list
+    temp_point_history = list(
+        itertools.chain.from_iterable(temp_point_history))
+
+    return temp_point_history
+
 def pre_process_point_history(image, point_history):
     image_width, image_height = image.shape[1], image.shape[0]
 
@@ -363,6 +401,12 @@ def logging_csv(number, mode, landmark_list, point_history_list):
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
+    if mode == 3 and (0 <= number <= 9):
+        csv_path = 'model/point_history_classifier/skelett_history.csv'
+        with open(csv_path, 'a', newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([number, *point_history_list])
+    
     return
 
 def draw_info_text(image, brect, handedness, hand_sign_text,
