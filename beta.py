@@ -52,6 +52,13 @@ def clickUp(x,y):
     win32api.SetCursorPos((x,y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
 
+def lockSem(Semaphore):
+    Semaphore = False
+
+def unlockSem(Semaphore):
+    Semaphore = True
+
+
 def main():
     # Argument parsing #################################################################
     args = get_args()
@@ -63,6 +70,7 @@ def main():
     aspect_ratio = 16/10 ### change this to 16/9 if you have a 16:9 monitor #FJ added this line
 
     downclick = False #FJ added this line
+    semaphore = True
 
 
     use_static_image_mode = args.use_static_image_mode
@@ -166,6 +174,14 @@ def main():
 
                 Xpos = (landmark_list[8][0]/cap_width)*aspect_ratio*screen_width
                 Ypos = (landmark_list[8][1]/cap_height)*screen_height
+                
+                
+                
+
+                actualtime = time.time()
+                if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
+                    semaphore = True
+
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
                     ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
@@ -174,16 +190,11 @@ def main():
                 
                 if hand_sign_id == 3:  # OK sign #FJ added this line
                     if downclick == False:
-                        convertedX = 65536 * Xpos // screen_width + 1
-                        convertedY = 65536 * Ypos // screen_height + 1
                         clickDown(int(Xpos), int(Ypos))
-                        #clickDown(convertedX, convertedY) #FJ added this line
                         downclick = True
                     ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
                     
                 if hand_sign_id != 3 and downclick == True: #FJ added this line                           
-                    convertedX = 65536 * Xpos // screen_width + 1
-                    convertedY = 65536 * Ypos // screen_height + 1
                     clickUp(int(Xpos), int(Ypos))
                     #clickUp(convertedX, convertedY) #FJ added this line
                     downclick = False
@@ -193,19 +204,20 @@ def main():
                     pyautogui.hotkey('alt', 'left')
                     pyautogui.PAUSE = 0.2
                 if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
-                    pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
+                    currentPosX, currentPosY = win32api.GetCursorPos()
+                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
+
+                    #pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
                     #pyautogui.PAUSE = 0.2
-                if hand_sign_id == 6:  # Copy #FJ added this line
+                if hand_sign_id == 6 and semaphore == True:  # Copy #FJ added this line
                     pyautogui.hotkey('ctrl', 'c')
-                    pyautogui.PAUSE = 0.2
-                if hand_sign_id == 7: # Paste / Peace sign #FJ added this line
+                    semaphore = False
+                    currtime = time.time()
+
+                if hand_sign_id == 7 and semaphore == True: # Paste / Peace sign #FJ added this line
                     pyautogui.hotkey('ctrl', 'v')
-                    pyautogui.PAUSE = 0.2
-
-                
-
-
-
+                    semaphore = False
+                    currtime = time.time()
 
                 # Finger gesture classification
                 finger_gesture_id = 0
