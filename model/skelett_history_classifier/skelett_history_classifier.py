@@ -8,7 +8,7 @@ class SkelettHistoryClassifier(object):
     def __init__(
         self,
         model_path='model/point_history_classifier/skelett_history_classifier.tflite',
-        score_th=0.5,
+        score_th=0.6,
         invalid_value=0,
         num_threads=1,
     ):
