@@ -110,7 +110,7 @@ def main():
             row[0] for row in point_history_classifier_labels
         ]
     with open(
-            'model/point_history_classifier/skelett_history_classifier_label.csv',
+            'model/skelett_history_classifier/skelett_history_classifier_label.csv',
             encoding='utf-8-sig') as f:
         skelett_history_classifier_labels = csv.reader(f)
         skelett_history_classifier_labels = [
@@ -358,29 +358,14 @@ def pre_process_skelett_history(image, skelett_history):
     image_width, image_height = image.shape[1], image.shape[0]
 
     temp_skelett_history = copy.deepcopy(skelett_history)
-
-    # Convert to relative coordinates
-    base_x, base_y = 0, 0
-    for index, skelett in enumerate(temp_skelett_history):
-        if index == 0:
-            base_x, base_y = skelett[0], skelett[1]
-
-        temp_skelett_history[index][0] = (temp_skelett_history[index][0] -
-                                        base_x) / image_width
-        temp_skelett_history[index][1] = (temp_skelett_history[index][1] -
-                                        base_y) / image_height
-
+    print(enumerate(temp_skelett_history))
+    #for index,point in enumerate(temp_skelett_history):
+     #   for _,skelett in enumerate(temp_skelett_history[index][point]):
+    #        temp_skelett_history[_][skelett] = pre_process_point_history(image, temp_skelett_history[_][skelett])
+        
     # Convert to a one-dimensional list
     temp_skelett_history = list(
-        itertools.chain.from_iterable(temp_skelett_history))
-    ########################## Kanske behöver ta bort, men tror vi behöver normalisera här #######
-    max_value = max(list(map(abs, temp_skelett_history)))
-
-    def normalize_(n):
-        return n / max_value
-
-    temp_skelett_history = list(map(normalize_, temp_skelett_history))
-    ###############################################################################################
+            itertools.chain.from_iterable(temp_skelett_history))
 
     return temp_skelett_history
 
