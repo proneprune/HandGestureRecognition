@@ -8,7 +8,7 @@ class SkelettHistoryClassifier(object):
     def __init__(
         self,
         model_path='model/skelett_history_classifier/skelett_history_classifier_copy.tflite',
-        score_th=0.6,
+        score_th=0.5,
         invalid_value=0,
         num_threads=1,
     ):
@@ -41,4 +41,5 @@ class SkelettHistoryClassifier(object):
         if np.squeeze(result)[result_index] < self.score_th:
             result_index = self.invalid_value
 
-        return result_index
+        return 1
+        #return result_index

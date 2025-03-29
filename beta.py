@@ -128,7 +128,7 @@ def main():
     finger_gesture_history = deque(maxlen=history_length)
 
     # Skelett gesture history ################################################
-    skelett_history = deque([[]], maxlen=history_length)
+    skelett_history = deque(maxlen=history_length)
     #  ########################################################################
     mode = 0
 
@@ -165,13 +165,13 @@ def main():
                 # Landmark calculation
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
+
+                print("landmarklist: " , landmark_list)
+                skelett_history.append(landmark_list)
                 # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(
-                    landmark_list)
-                pre_processed_point_history_list = pre_process_point_history(
-                    debug_image, point_history)
-                pre_processed_skelett_history_list = pre_process_skelett_history(
-                    debug_image, skelett_history)
+                pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                pre_processed_point_history_list = pre_process_point_history(debug_image, point_history)
+                pre_processed_skelett_history_list = pre_process_skelett_history(debug_image, skelett_history,landmark_list)
                 # Write to the dataset file
                 logging_csv(number, mode, pre_processed_landmark_list,
                             pre_processed_point_history_list,pre_processed_skelett_history_list)
@@ -183,8 +183,9 @@ def main():
                 Ypos = (landmark_list[8][1]/cap_height)*screen_height
 
                 # Skelett gesture classification
-                skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
+                #skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
                 ##TODO Add actions to skelett_gestures_id //F
+
                 
                 
 
@@ -244,14 +245,14 @@ def main():
                     finger_gesture_history).most_common()
                 
                 skelett_gesture_id = 0
-                skelett_history_len = len(pre_process_skelett_history)
+                skelett_history_len = len(pre_processed_skelett_history_list)
                 if skelett_history_len == (history_length * 2):
                     skelett_gesture_id = skelett_history_classifier(
-                        pre_process_skelett_history)
+                        pre_processed_skelett_history_list)
                     
-                skelett_history.append(skelett_gesture_id)
-                most_common_skelett_id = Counter(
-                    skelett_history).most_common()
+                #skelett_history.append(skelett_gesture_id)
+                #most_common_skelett_id = Counter(
+                #    skelett_history).most_common()
 
 
                 # Drawing part
@@ -262,11 +263,11 @@ def main():
                     handedness,
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
-                    skelett_history_classifier_labels[most_common_skelett_id[0][0]],
+                    #skelett_history_classifier_labels[most_common_skelett_id[0][0]],
                 )
         else:
             point_history.append([0, 0])
-            skelett_history.append([0, 0])
+            skelett_history.append([[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])
 
         debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps, mode, number)
@@ -328,12 +329,15 @@ def calc_landmark_list(image, landmarks):
 
 
 def pre_process_landmark(landmark_list):
+    #print("landmark list", landmark_list)
     temp_landmark_list = copy.deepcopy(landmark_list)
+    print(temp_landmark_list)
 
     # Convert to relative coordinates
     base_x, base_y = 0, 0
     for index, landmark_point in enumerate(temp_landmark_list):
         if index == 0:
+            #print(landmark_point)  
             base_x, base_y = landmark_point[0], landmark_point[1]
 
         temp_landmark_list[index][0] = temp_landmark_list[index][0] - base_x
@@ -354,20 +358,42 @@ def pre_process_landmark(landmark_list):
     return temp_landmark_list
 
 
-def pre_process_skelett_history(image, skelett_history):
-    image_width, image_height = image.shape[1], image.shape[0]
+        #först tar vi palmens koordinater i första frame och sätter det som bas
+        #sen tar vi i punkter på handen och konverterar de gentemot basen.
+        #I de nästa frames så sätter vi vad palmens koordinater i den framen är och konverterar de gentemot palmen i första framen
+        #efter det så konverterar vi de andra punkterna gentemot palmen i den framen
+        #vi får in en deque med 16 frames. Vi får deque med 16 listor, csv = 16frames * 2coordinater *21 punkter ((+1class))
 
+def pre_process_skelett_history(image, skelett_history,landmarklist):
+    image_width, image_height = image.shape[1], image.shape[0]
+    #print("skelett history", skelett_history)
     temp_skelett_history = copy.deepcopy(skelett_history)
+    temp_landmarklist = copy.deepcopy(landmarklist)
+    #print("temp_skelett_history", temp_skelett_history, " temp_landmarklist" , temp_landmarklist)
+
+    print("Length of deque:", len(temp_skelett_history))  # Should be ≤16 (history_length)
+    print("Whole deque:", temp_skelett_history) 
+    print("First frame:", temp_skelett_history[0])       # Should be a list of 21 [x,y] pairs
+    print("First landmark:", temp_skelett_history[0][0]) # Should be [x, y], not an int
+
+
+
+    base_x, base_y = 0,0
+    #jag tror att skelett är tom för att dens queue har inte hunnit fyllas på
     
-    for index,point in enumerate(temp_skelett_history):
-       for _,skelett in enumerate(temp_skelett_history[index][point]):
-            temp_skelett_history[_][skelett] = pre_process_point_history(image, temp_skelett_history[_][skelett])
-        
+    for frames,point in enumerate(temp_skelett_history):
+        if frames == 0:
+            base_x, base_y =  temp_skelett_history[0][0][0] , temp_skelett_history[0][0][1]
+            #print("base x: ", base_x , "base y: ",base_y)           
+        else:  
+            temp_skelett_history[frames][0][0] = (temp_skelett_history[frames][0][0] - base_x) / image_width
+            temp_skelett_history[frames][0][1] = (temp_skelett_history[frames][0][1] - base_y) / image_height
+
     # Convert to a one-dimensional list
     temp_skelett_history = list(
             itertools.chain.from_iterable(temp_skelett_history))
 
-    return temp_skelett_history
+    return temp_skelett_history  ## Vill returnera en deque med alla punkter i rad
 
 def pre_process_point_history(image, point_history):
     image_width, image_height = image.shape[1], image.shape[0]
@@ -380,10 +406,8 @@ def pre_process_point_history(image, point_history):
         if index == 0:
             base_x, base_y = point[0], point[1]
 
-        temp_point_history[index][0] = (temp_point_history[index][0] -
-                                        base_x) / image_width
-        temp_point_history[index][1] = (temp_point_history[index][1] -
-                                        base_y) / image_height
+        temp_point_history[index][0] = (temp_point_history[index][0] - base_x) / image_width
+        temp_point_history[index][1] = (temp_point_history[index][1] - base_y) / image_height
 
     # Convert to a one-dimensional list
     temp_point_history = list(
@@ -415,7 +439,7 @@ def logging_csv(number, mode, landmark_list, point_history_list, skelett_history
     return
 
 def draw_info_text(image, brect, handedness, hand_sign_text,
-                   finger_gesture_text,skelett_history_classifier_labels):
+                   finger_gesture_text):
     cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
                  (0, 0, 0), -1)
 
@@ -431,10 +455,10 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
         cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
-    if skelett_history_classifier_labels !="":
-        cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
-                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
-                   cv.LINE_AA)
+#    if skelett_history_classifier_labels !="":
+#        cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
+#                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
+#                   cv.LINE_AA)
 
     return image
 
