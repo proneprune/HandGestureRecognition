@@ -358,10 +358,10 @@ def pre_process_skelett_history(image, skelett_history):
     image_width, image_height = image.shape[1], image.shape[0]
 
     temp_skelett_history = copy.deepcopy(skelett_history)
-    print(enumerate(temp_skelett_history))
-    #for index,point in enumerate(temp_skelett_history):
-     #   for _,skelett in enumerate(temp_skelett_history[index][point]):
-    #        temp_skelett_history[_][skelett] = pre_process_point_history(image, temp_skelett_history[_][skelett])
+    
+    for index,point in enumerate(temp_skelett_history):
+       for _,skelett in enumerate(temp_skelett_history[index][point]):
+            temp_skelett_history[_][skelett] = pre_process_point_history(image, temp_skelett_history[_][skelett])
         
     # Convert to a one-dimensional list
     temp_skelett_history = list(
