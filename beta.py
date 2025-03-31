@@ -131,10 +131,10 @@ def main():
     skelett_history = deque(maxlen=history_length)
     #  ########################################################################
     mode = 0
-
+    timer = 0
     while True:
         fps = cvFpsCalc.get()
-
+        
         # Process Key (ESC: end) #################################################
         key = cv.waitKey(10)
         if key == 27:  # ESC
@@ -173,6 +173,7 @@ def main():
                 pre_processed_point_history_list = pre_process_point_history(debug_image, point_history)
                 pre_processed_skelett_history_list = pre_process_skelett_history(debug_image, skelett_history,landmark_list)
                 # Write to the dataset file
+                
                 logging_csv(number, mode, pre_processed_landmark_list,
                             pre_processed_point_history_list,pre_processed_skelett_history_list)
 
@@ -189,9 +190,9 @@ def main():
                 
                 
 
-                actualtime = time.time()
-                if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
-                    semaphore = True
+                # actualtime = time.time()
+                # if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
+                #     semaphore = True
 
                 if hand_sign_id == 2:  # Point gesture
                     point_history.append(landmark_list[8])
@@ -199,38 +200,38 @@ def main():
                     #pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
                     #pyautogui.sleep(0.01) #FJ added this line
                 
-                if hand_sign_id == 3:  # OK sign #FJ added this line
-                    if downclick == False:
-                        clickDown(int(Xpos), int(Ypos))
-                        downclick = True
-                    ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+                # if hand_sign_id == 3:  # OK sign #FJ added this line
+                #     if downclick == False:
+                #         clickDown(int(Xpos), int(Ypos))
+                #         downclick = True
+                #     ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
                     
-                if hand_sign_id != 3 and downclick == True: #FJ added this line                           
-                    clickUp(int(Xpos), int(Ypos))
-                    #clickUp(convertedX, convertedY) #FJ added this line
-                    downclick = False
+                # if hand_sign_id != 3 and downclick == True: #FJ added this line                           
+                #     clickUp(int(Xpos), int(Ypos))
+                #     #clickUp(convertedX, convertedY) #FJ added this line
+                #     downclick = False
 
                 
-                if hand_sign_id == 4:  # Back sign #FJ added this line
-                    pyautogui.hotkey('alt', 'left')
-                    pyautogui.PAUSE = 0.2
-                if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
-                    currentPosX, currentPosY = win32api.GetCursorPos()
-                    win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
+                # if hand_sign_id == 4:  # Back sign #FJ added this line
+                #     pyautogui.hotkey('alt', 'left')
+                #     pyautogui.PAUSE = 0.2
+                # if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
+                #     currentPosX, currentPosY = win32api.GetCursorPos()
+                #     win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
 
-                    #pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
-                    #pyautogui.PAUSE = 0.2
-                if hand_sign_id == 6 and semaphore == True:  # Copy #FJ added this line
-                    pyautogui.hotkey('ctrl', 'c')
-                    semaphore = False
-                    currtime = time.time()
+                #     #pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
+                #     #pyautogui.PAUSE = 0.2
+                # if hand_sign_id == 6 and semaphore == True:  # Copy #FJ added this line
+                #     pyautogui.hotkey('ctrl', 'c')
+                #     semaphore = False
+                #     currtime = time.time()
 
-                if hand_sign_id == 7 and semaphore == True: # Paste / Peace sign #FJ added this line
-                    pyautogui.hotkey('ctrl', 'v')
-                    semaphore = False
-                    currtime = time.time()
-                if hand_sign_id == 8:  # Turn off #FJ added this line
-                    break
+                # if hand_sign_id == 7 and semaphore == True: # Paste / Peace sign #FJ added this line
+                #     pyautogui.hotkey('ctrl', 'v')
+                #     semaphore = False
+                #     currtime = time.time()
+                # if hand_sign_id == 8:  # Turn off #FJ added this line
+                #     break
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -244,15 +245,14 @@ def main():
                 most_common_fg_id = Counter(
                     finger_gesture_history).most_common()
                 
-                skelett_gesture_id = 0
-                skelett_history_len = len(pre_processed_skelett_history_list)
-                if skelett_history_len == (history_length * 2):
-                    skelett_gesture_id = skelett_history_classifier(
-                        pre_processed_skelett_history_list)
+                # skelett_gesture_id = 0
+                # skelett_history_len = len(pre_processed_skelett_history_list)
+                # if skelett_history_len == (history_length * 2):
+                #     skelett_gesture_id = skelett_history_classifier(
+                #         pre_processed_skelett_history_list)
                     
-                #skelett_history.append(skelett_gesture_id)
-                #most_common_skelett_id = Counter(
-                #    skelett_history).most_common()
+                # skelett_history.append(skelett_gesture_id)
+                # most_common_skelett_id = Counter().most_common()
 
 
                 # Drawing part
@@ -263,7 +263,7 @@ def main():
                     handedness,
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
-                    #skelett_history_classifier_labels[most_common_skelett_id[0][0]],
+                    # skelett_history_classifier_labels[most_common_skelett_id[0][0]],
                 )
         else:
             point_history.append([0, 0])
@@ -392,6 +392,9 @@ def pre_process_skelett_history(image, skelett_history,landmarklist):
     # Convert to a one-dimensional list
     temp_skelett_history = list(
             itertools.chain.from_iterable(temp_skelett_history))
+    temp_skelett_history = list(
+            itertools.chain.from_iterable(temp_skelett_history))
+    
 
     return temp_skelett_history  ## Vill returnera en deque med alla punkter i rad
 
@@ -430,13 +433,20 @@ def logging_csv(number, mode, landmark_list, point_history_list, skelett_history
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
     if mode == 3 and (0 <= number <= 9):
-        csv_path = 'model/point_history_classifier/skelett_history.csv'
+
+        # Start timer om timer inte finns, finns timer fortsätt
+        # Om timer är större än start timer +1 avbryt loggning
+        
+        csv_path = 'model/skelett_history_classifier/skelett_history.csv'
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *skelett_history_list])
             ##TODO Change from *point_history_list to skelett_history_list
-    
     return
+
+def timern (start_time):
+    start_time = time.time()
+    return start_time
 
 def draw_info_text(image, brect, handedness, hand_sign_text,
                    finger_gesture_text):
@@ -455,10 +465,10 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
         cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
-#    if skelett_history_classifier_labels !="":
-#        cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
-#                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
-#                   cv.LINE_AA)
+    # if skelett_history_classifier_labels !="":
+    #     cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
+    #                cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
+    #                cv.LINE_AA)
 
     return image
 
