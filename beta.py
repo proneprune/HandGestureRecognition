@@ -62,7 +62,7 @@ def main():
     cap_height = args.height
     screen_width, screen_height = pyautogui.size() #FJ: added this line
     aspect_ratio = 16/10 ### change this to 16/9 if you have a 16:9 monitor #FJ added this line
-
+    
     downclick = False #FJ added this line
     semaphore = True
 
@@ -129,6 +129,8 @@ def main():
 
     # Skelett gesture history ################################################
     skelett_history = deque(maxlen=history_length)
+    skelett_gesture_history = deque(maxlen=history_length)
+    
     #  ########################################################################
     mode = 0
     timer = 0
@@ -166,7 +168,7 @@ def main():
                 landmark_list = calc_landmark_list(debug_image, hand_landmarks)
 
 
-                print("landmarklist: " , landmark_list)
+                #print("landmarklist: " , landmark_list)
                 skelett_history.append(landmark_list)
                 # Conversion to relative coordinates / normalized coordinates
                 pre_processed_landmark_list = pre_process_landmark(landmark_list)
@@ -187,8 +189,6 @@ def main():
                 #skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
                 ##TODO Add actions to skelett_gestures_id //F
 
-                
-                
 
                 # actualtime = time.time()
                 # if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
@@ -236,23 +236,24 @@ def main():
                 # Finger gesture classification
                 finger_gesture_id = 0
                 point_history_len = len(pre_processed_point_history_list)
+              #print("point history length", point_history_len)
                 if point_history_len == (history_length * 2):
-                    finger_gesture_id = point_history_classifier(
-                        pre_processed_point_history_list)
+                    finger_gesture_id = point_history_classifier(pre_processed_point_history_list)
 
                 # Calculates the gesture IDs in the latest detection
                 finger_gesture_history.append(finger_gesture_id)
-                most_common_fg_id = Counter(
-                    finger_gesture_history).most_common()
-                print(skelett_history_classifier )
-                # skelett_gesture_id = 0
-                # skelett_history_len = len(pre_processed_skelett_history_list)
-                # if skelett_history_len == (history_length * 2):
-                #     skelett_gesture_id = skelett_history_classifier(
-                #         pre_processed_skelett_history_list)
-                    
-                # skelett_history.append(skelett_gesture_id)
-                # most_common_skelett_id = Counter().most_common()
+                most_common_fg_id = Counter(finger_gesture_history).most_common()
+
+
+                skelett_gesture_id = 0
+                skelett_history_len = len(pre_processed_skelett_history_list)
+              #print("skelett history length", skelett_history_len)
+                if skelett_history_len == (history_length * 2 * 21):
+                    skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
+                print("skelett gesture id", skelett_gesture_id)
+                skelett_gesture_history.append(skelett_gesture_id)
+                print("skelett history", skelett_gesture_history)
+                most_common_skelett_id = Counter(skelett_gesture_history).most_common()
 
 
                 # Drawing part
@@ -263,7 +264,7 @@ def main():
                     handedness,
                     keypoint_classifier_labels[hand_sign_id],
                     point_history_classifier_labels[most_common_fg_id[0][0]],
-                    # skelett_history_classifier_labels[most_common_skelett_id[0][0]],
+                    skelett_history_classifier_labels[most_common_skelett_id[0][0]],
                 )
         else:
             point_history.append([0, 0])
@@ -381,13 +382,17 @@ def pre_process_skelett_history(image, skelett_history,landmarklist):
     base_x, base_y = 0,0
     #jag tror att skelett är tom för att dens queue har inte hunnit fyllas på
     
-    for frames,point in enumerate(temp_skelett_history):
+    for frames,_ in enumerate(temp_skelett_history):
         if frames == 0:
             base_x, base_y =  temp_skelett_history[0][0][0] , temp_skelett_history[0][0][1]
             #print("base x: ", base_x , "base y: ",base_y)           
         else:  
             temp_skelett_history[frames][0][0] = (temp_skelett_history[frames][0][0] - base_x) / image_width
             temp_skelett_history[frames][0][1] = (temp_skelett_history[frames][0][1] - base_y) / image_height
+            for point in range(1, 20):
+                #print("point",point)
+                temp_skelett_history[frames][point][0] = temp_skelett_history[frames][point][0] - temp_skelett_history[frames][0][0]
+                temp_skelett_history[frames][point][1] = temp_skelett_history[frames][point][1] - temp_skelett_history[frames][0][1]
 
     # Convert to a one-dimensional list
     temp_skelett_history = list(
@@ -395,6 +400,12 @@ def pre_process_skelett_history(image, skelett_history,landmarklist):
     temp_skelett_history = list(
             itertools.chain.from_iterable(temp_skelett_history))
     
+    max_skelett = max(1e-2, max(map(abs, temp_skelett_history)))
+    
+    def normalize_skelett(n):
+        return n / max_skelett
+
+    temp_skelett_history = list(map(normalize_skelett, temp_skelett_history))
 
     return temp_skelett_history  ## Vill returnera en deque med alla punkter i rad
 
@@ -432,16 +443,11 @@ def logging_csv(number, mode, landmark_list, point_history_list, skelett_history
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *point_history_list])
-    if mode == 3 and (0 <= number <= 9):
-
-        # Start timer om timer inte finns, finns timer fortsätt
-        # Om timer är större än start timer +1 avbryt loggning
-        
+    if mode == 3 and (0 <= number <= 9):        
         csv_path = 'model/skelett_history_classifier/skelett_history.csv'
         with open(csv_path, 'a', newline="") as f:
             writer = csv.writer(f)
             writer.writerow([number, *skelett_history_list])
-            ##TODO Change from *point_history_list to skelett_history_list
     return
 
 def timern (start_time):
@@ -449,7 +455,7 @@ def timern (start_time):
     return start_time
 
 def draw_info_text(image, brect, handedness, hand_sign_text,
-                   finger_gesture_text):
+                   finger_gesture_text,skelett_history_classifier_labels):
     cv.rectangle(image, (brect[0], brect[1]), (brect[2], brect[1] - 22),
                  (0, 0, 0), -1)
 
@@ -466,10 +472,10 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
         
-    # if skelett_history_classifier_labels !="":
-    #     cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
-    #                cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
-    #                cv.LINE_AA)
+    if skelett_history_classifier_labels !="":
+        cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 100),
+                   cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
+                   cv.LINE_AA)
 
     return image
 
