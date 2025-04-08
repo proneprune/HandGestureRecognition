@@ -1,0 +1,4 @@
+vi måste normalisera våra gestures i csv
+vi måste fixa lstm (borde vara bättre)
+träna med mer data på allt.
+eventuellt fixa att rita ut och visa gesture (counter)

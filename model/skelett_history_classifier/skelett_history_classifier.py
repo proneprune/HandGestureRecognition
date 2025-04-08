@@ -41,5 +41,5 @@ class SkelettHistoryClassifier(object):
         if np.squeeze(result)[result_index] < self.score_th:
             result_index = self.invalid_value
 
-        return 1
-        #return result_index
+        #return 1 # only during debugging
+        return result_index

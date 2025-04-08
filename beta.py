@@ -244,7 +244,7 @@ def main():
                 finger_gesture_history.append(finger_gesture_id)
                 most_common_fg_id = Counter(
                     finger_gesture_history).most_common()
-                
+                print(skelett_history_classifier )
                 # skelett_gesture_id = 0
                 # skelett_history_len = len(pre_processed_skelett_history_list)
                 # if skelett_history_len == (history_length * 2):
@@ -331,7 +331,7 @@ def calc_landmark_list(image, landmarks):
 def pre_process_landmark(landmark_list):
     #print("landmark list", landmark_list)
     temp_landmark_list = copy.deepcopy(landmark_list)
-    print(temp_landmark_list)
+    #print(temp_landmark_list)
 
     # Convert to relative coordinates
     base_x, base_y = 0, 0
@@ -371,10 +371,10 @@ def pre_process_skelett_history(image, skelett_history,landmarklist):
     temp_landmarklist = copy.deepcopy(landmarklist)
     #print("temp_skelett_history", temp_skelett_history, " temp_landmarklist" , temp_landmarklist)
 
-    print("Length of deque:", len(temp_skelett_history))  # Should be ≤16 (history_length)
-    print("Whole deque:", temp_skelett_history) 
-    print("First frame:", temp_skelett_history[0])       # Should be a list of 21 [x,y] pairs
-    print("First landmark:", temp_skelett_history[0][0]) # Should be [x, y], not an int
+    # print("Length of deque:", len(temp_skelett_history))  # Should be ≤16 (history_length)
+    # print("Whole deque:", temp_skelett_history) 
+    # print("First frame:", temp_skelett_history[0])       # Should be a list of 21 [x,y] pairs
+    # print("First landmark:", temp_skelett_history[0][0]) # Should be [x, y], not an int
 
 
 
@@ -465,6 +465,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
         cv.putText(image, "Finger Gesture:" + finger_gesture_text, (10, 60),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
+        
     # if skelett_history_classifier_labels !="":
     #     cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 110),
     #                cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
