@@ -250,9 +250,9 @@ def main():
               #print("skelett history length", skelett_history_len)
                 if skelett_history_len == (history_length * 2 * 21):
                     skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
-                print("skelett gesture id", skelett_gesture_id)
+                #print("skelett gesture id", skelett_gesture_id)
                 skelett_gesture_history.append(skelett_gesture_id)
-                print("skelett history", skelett_gesture_history)
+                #print("skelett history", skelett_gesture_history)
                 most_common_skelett_id = Counter(skelett_gesture_history).most_common()
 
 

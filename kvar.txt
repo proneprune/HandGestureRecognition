@@ -1,4 +1,7 @@
-vi måste normalisera våra gestures i csv
-vi måste fixa lstm (borde vara bättre)
 träna med mer data på allt.
-eventuellt fixa att rita ut och visa gesture (counter)
+FUCK YOU!!!! (ESCAPE)
+Mappa alla gestures till commandon
+Dubbelkolla att allt med datan funkar (Framförallt normaliseringen på skelett)
+
+Lägga in en prio-lista om man skulle göra gestures och en rörelse/statist gest samtigt.
+
