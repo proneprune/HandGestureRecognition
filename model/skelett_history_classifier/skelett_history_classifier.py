@@ -8,7 +8,7 @@ class SkelettHistoryClassifier(object):
     def __init__(
         self,
         model_path='model/skelett_history_classifier/skelett_history_classifier.tflite',
-        score_th=0.5,
+        score_th=0.75,
         invalid_value=0,
         num_threads=1,
     ):
@@ -23,7 +23,7 @@ class SkelettHistoryClassifier(object):
         self.invalid_value = invalid_value
 
     def __call__(self,skelett_history,):
-        print("Expected input shape:", self.input_details[0]['shape'])
+        #print("Expected input shape:", self.input_details[0]['shape'])
 
         input_details_tensor_index = self.input_details[0]['index']
         self.interpreter.set_tensor(
