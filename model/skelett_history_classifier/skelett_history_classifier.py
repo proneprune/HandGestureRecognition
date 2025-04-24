@@ -9,7 +9,7 @@ class SkelettHistoryClassifier(object):
         self,
         model_path='model/skelett_history_classifier/skelett_history_classifier.tflite',
         score_th=0.75,
-        invalid_value=0,
+        invalid_value=9,
         num_threads=1,
     ):
         self.interpreter = tf.lite.Interpreter(model_path=model_path,
