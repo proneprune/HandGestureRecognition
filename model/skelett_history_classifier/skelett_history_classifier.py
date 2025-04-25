@@ -8,7 +8,7 @@ class SkelettHistoryClassifier(object):
     def __init__(
         self,
         model_path='model/skelett_history_classifier/skelett_history_classifier.tflite',
-        score_th=0.75,
+        score_th=0.70,
         invalid_value=9,
         num_threads=1,
     ):
@@ -41,4 +41,6 @@ class SkelettHistoryClassifier(object):
             result_index = self.invalid_value
 
         #return 1 # only during debugging
+        if result_index == 8:
+            result_index = 9
         return result_index

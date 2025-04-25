@@ -22,6 +22,11 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 from model import SkelettHistoryClassifier
+import keypress
+
+
+KEYEVENTF_KEYDOWN = 0x0000  #PYAutogui
+KEYEVENTF_KEYUP = 0x0002    #PYAutogui
 
 
 def get_args():
@@ -64,7 +69,7 @@ def main():
     aspect_ratio = 16/10 ### change this to 16/9 if you have a 16:9 monitor #FJ added this line
     
     downclick = False #FJ added this line
-    semaphore = True
+    semaphore = True #FJ added this line
 
 
     use_static_image_mode = args.use_static_image_mode
@@ -130,7 +135,8 @@ def main():
     # Skelett gesture history ################################################
     skelett_history = deque(maxlen=history_length)
     skelett_gesture_history = deque(maxlen=history_length)
-    
+    #initiliazeSGH() #TODO
+    skelett_history = keypress.skelettinit()
     #  ########################################################################
     mode = 0
     timer = 0
@@ -181,6 +187,7 @@ def main():
 
                 # Hand sign classification
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list) #FJ
 
                 Xpos = (landmark_list[8][0]/cap_width)*aspect_ratio*screen_width
                 Ypos = (landmark_list[8][1]/cap_height)*screen_height
@@ -188,50 +195,124 @@ def main():
                 # Skelett gesture classification
                 #skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
                 ##TODO Add actions to skelett_gestures_id //F
+###################################Done by FJ###############################################################3
+                actualtime = time.time()
+                if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
+                    semaphore = True
+
+                if semaphore is True:
+
+                    match skelett_gesture_id:
+                        case 0:
+                            #rotera mellan tabbar
+                            #alt + tab
+                            keypress.alttab()
+                            print("rotera")
+                            currtime = time.time()
+                            semaphore = False
+                        case 1:
+                            # zoomin
+                            #ctrl + plus
+                            keypress.zoomin()
+                            print("Zoomin")
+                            currtime = time.time()
+                            semaphore = False
+                          
+                        case 2:
+                            # zoomout
+                            #ctrl + minus
+                            keypress.zoomout()  
+                            print("Rad")
+                            currtime = time.time()
+                            semaphore = False
+                        case 3:
+                            print("back")
+                            #alt + left arrow                  
+                            keypress.back()
+                            currtime = time.time()
+                            semaphore = False
+                        case 4:
+                            # Japp/Haj (Mute)
+                            # mute
+                            keypress.mute()
+                            print("Mute")
+                            currtime = time.time()
+                            semaphore = False
+  
+                        case 5:
+                            # Spiderman (Open the web)
+                            #ctrl + win + shift + alt + l
+                            print("Vinka")                            
+                            keypress.linkedin()
+                            currtime = time.time()
+                            semaphore = False
+  
+                        case 6:
+                            print("Basket boll (Höj)")           
+                            #volumeup                 
+                            keypress.raisevolume()
+                            currtime = time.time()
+                            semaphore = False
+                        case 7:
+                            print("Basket studs (Sänk)")
+                            #volumedown                            
+                            keypress.lowervolume()
+                            semaphore = False
+                            currtime = time.time()
+                        case 8:
+                            #Pistol (Stäng av)
+                            #esc                            
+                            #keypress.escape()
+                            print(" Pistol (Stäng av)")
+                            semaphore = False
+                            currtime = time.time()
+                        case _:
+                            
+
+    ################################################## Hand sign action #######################################################
 
 
-                # actualtime = time.time()
-                # if semaphore == False and actualtime >= currtime + 1: #Delay before pasteing and copying. FJ added this line 
-                #     semaphore = True
+                            if hand_sign_id == 2:  # Point gesture
+                                point_history.append(landmark_list[8])
+                                ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+                            if hand_sign_id == 3:  # OK sign #FJ added this line
+                                if downclick == False:
+                                    clickDown(int(Xpos), int(Ypos))
+                                    downclick = True
+                                ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+                                
+                            if hand_sign_id != 3 and downclick == True: #FJ added this line                           
+                                clickUp(int(Xpos), int(Ypos))
+                                #clickUp(convertedX, convertedY) #FJ added this line
+                                downclick = False
 
-                if hand_sign_id == 2:  # Point gesture
-                    point_history.append(landmark_list[8])
-                    ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
-                    #pyautogui.moveTo((landmark_list[8][0]/cap_width)*aspect_ratio*screen_width, (landmark_list[8][1]/cap_height)*screen_height, 0.1) #FJ added this line
-                    #pyautogui.sleep(0.01) #FJ added this line
-                
-                # if hand_sign_id == 3:  # OK sign #FJ added this line
-                #     if downclick == False:
-                #         clickDown(int(Xpos), int(Ypos))
-                #         downclick = True
-                #     ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
-                    
-                # if hand_sign_id != 3 and downclick == True: #FJ added this line                           
-                #     clickUp(int(Xpos), int(Ypos))
-                #     #clickUp(convertedX, convertedY) #FJ added this line
-                #     downclick = False
+                            
+                            if hand_sign_id == 4:  # Back sign #FJ added this line
+                                keypress.back()
+                            if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
+                                currentPosX, currentPosY = win32api.GetCursorPos()
+                                win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
+                                semaphore = False
+                            if hand_sign_id == 6 and semaphore == True:  # Copy #FJ added this
 
-                
-                # if hand_sign_id == 4:  # Back sign #FJ added this line
-                #     pyautogui.hotkey('alt', 'left')
-                #     pyautogui.PAUSE = 0.2
-                # if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
-                #     currentPosX, currentPosY = win32api.GetCursorPos()
-                #     win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
+                                keypress.copy()
+                                semaphore = False
+                                currtime = time.time()
 
-                #     #pyautogui.scroll(50, pyautogui.position().x, pyautogui.position().y)
-                #     #pyautogui.PAUSE = 0.2
-                # if hand_sign_id == 6 and semaphore == True:  # Copy #FJ added this line
-                #     pyautogui.hotkey('ctrl', 'c')
-                #     semaphore = False
-                #     currtime = time.time()
+                            if hand_sign_id == 7 and semaphore == True: # Paste / Peace sign #FJ added this line
+                                #ctrl + v
+                                keypress.paste()
+                                semaphore = False
+                                currtime = time.time()
+                            if hand_sign_id == 8:  # Turn off #FJ added this line
+                                break
+                            # # None
+                            # 
+    ###########################################################hand sign action end#############################################
+                        
 
-                # if hand_sign_id == 7 and semaphore == True: # Paste / Peace sign #FJ added this line
-                #     pyautogui.hotkey('ctrl', 'v')
-                #     semaphore = False
-                #     currtime = time.time()
-                # if hand_sign_id == 8:  # Turn off #FJ added this line
-                #     break
+###################################Done by FJ end###############################################################3
+
 
                 # Finger gesture classification
                 finger_gesture_id = 0
@@ -245,15 +326,15 @@ def main():
                 most_common_fg_id = Counter(finger_gesture_history).most_common()
 
 
-                skelett_gesture_id = 0
-                skelett_history_len = len(pre_processed_skelett_history_list)
+                skelett_gesture_id = 10 #default värde = 10 för det är none#FJ
+                skelett_history_len = len(pre_processed_skelett_history_list) #FJ
               #print("skelett history length", skelett_history_len)
-                if skelett_history_len == (history_length * 2 * 21):
-                    skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list)
+                if skelett_history_len == (history_length * 2 * 21): #FJ
+                    skelett_gesture_id = skelett_history_classifier(pre_processed_skelett_history_list) #FJ
                 #print("skelett gesture id", skelett_gesture_id)
-                skelett_gesture_history.append(skelett_gesture_id)
+                skelett_gesture_history.append(skelett_gesture_id) #FJ
                 #print("skelett history", skelett_gesture_history)
-                most_common_skelett_id = Counter(skelett_gesture_history).most_common()
+                most_common_skelett_id = Counter(skelett_gesture_history).most_common() #FJ
 
 
                 # Drawing part
@@ -268,7 +349,7 @@ def main():
                 )
         else:
             point_history.append([0, 0])
-            skelett_history.append([[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])
+            skelett_history.append([[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])#FJ
 
         debug_image = draw_point_history(debug_image, point_history)
         debug_image = draw_info(debug_image, fps, mode, number)
@@ -291,7 +372,7 @@ def select_mode(key, mode):
     if key == 104:  # h
         mode = 2
     if key == 109:  # m #Added for skelett gesture mode #FJ
-        mode = 3 
+        mode = 3 #FJ
     return number, mode
 
 
@@ -365,6 +446,7 @@ def pre_process_landmark(landmark_list):
         #efter det så konverterar vi de andra punkterna gentemot palmen i den framen
         #vi får in en deque med 16 frames. Vi får deque med 16 listor, csv = 16frames * 2coordinater *21 punkter ((+1class))
 
+###############################DONE BY FJ###############################################3
 def pre_process_skelett_history(image, skelett_history,landmarklist):
     image_width, image_height = image.shape[1], image.shape[0]
     #print("skelett history", skelett_history)
@@ -409,6 +491,9 @@ def pre_process_skelett_history(image, skelett_history,landmarklist):
 
     return temp_skelett_history  ## Vill returnera en deque med alla punkter i rad
 
+
+###########################################DONe BY FJ END################################################
+
 def pre_process_point_history(image, point_history):
     image_width, image_height = image.shape[1], image.shape[0]
 
@@ -450,7 +535,7 @@ def logging_csv(number, mode, landmark_list, point_history_list, skelett_history
             writer.writerow([number, *skelett_history_list])
     return
 
-def timern (start_time):
+def timern (start_time): #FJ
     start_time = time.time()
     return start_time
 
@@ -472,7 +557,7 @@ def draw_info_text(image, brect, handedness, hand_sign_text,
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
         
-    if skelett_history_classifier_labels !="":
+    if skelett_history_classifier_labels !="": #FJ
         cv.putText(image, "Skelett Gesture:" + skelett_history_classifier_labels, (10, 100),
                    cv.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2,
                    cv.LINE_AA)
