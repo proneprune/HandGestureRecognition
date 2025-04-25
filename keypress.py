@@ -8,18 +8,18 @@ KEYEVENTF_KEYUP = 0x0002    #PYAutogui
 
 
 def copy():
-    ctypes.windll.user32.keybd_event(0x0c, 0, KEYEVENTF_KEYDOWN, 0) #ctrl
+    ctypes.windll.user32.keybd_event(0x11, 0, KEYEVENTF_KEYDOWN, 0) #ctrl
     ctypes.windll.user32.keybd_event(0x43, 0, KEYEVENTF_KEYDOWN, 0) #c
 
     ctypes.windll.user32.keybd_event(0x43, 0, KEYEVENTF_KEYUP, 0) #c
-    ctypes.windll.user32.keybd_event(0x0c, 0, KEYEVENTF_KEYUP, 0) #ctrl
+    ctypes.windll.user32.keybd_event(0x11, 0, KEYEVENTF_KEYUP, 0) #ctrl
 
 def paste():
-    ctypes.windll.user32.keybd_event(0x0c, 0, KEYEVENTF_KEYDOWN, 0) #ctrl
+    ctypes.windll.user32.keybd_event(0x11, 0, KEYEVENTF_KEYDOWN, 0) #ctrl
     ctypes.windll.user32.keybd_event(0x56, 0, KEYEVENTF_KEYDOWN, 0) #v
 
     ctypes.windll.user32.keybd_event(0x56, 0, KEYEVENTF_KEYUP, 0) #v
-    ctypes.windll.user32.keybd_event(0x0c, 0, KEYEVENTF_KEYUP, 0) #ctrl
+    ctypes.windll.user32.keybd_event(0x11, 0, KEYEVENTF_KEYUP, 0) #ctrl
 
 def back():
     ctypes.windll.user32.keybd_event(0x12, 0, KEYEVENTF_KEYDOWN, 0) #ALT
