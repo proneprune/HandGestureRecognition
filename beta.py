@@ -58,6 +58,14 @@ def clickUp(x,y):
     win32api.SetCursorPos((x,y))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
 
+def clickRightDown(x,y):
+    win32api.SetCursorPos((x,y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN,x,y,0,0)
+
+def clickRightUp(x,y):
+    win32api.SetCursorPos((x,y))
+    win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP,x,y,0,0)
+
 def main():
     # Argument parsing #################################################################
     args = get_args()
@@ -70,6 +78,7 @@ def main():
     
     downclick = False #FJ added this line
     semaphore = True #FJ added this line
+    downclickright = False #FJ added this line
 
 
     use_static_image_mode = args.use_static_image_mode
@@ -288,7 +297,15 @@ def main():
 
                             
                             if hand_sign_id == 4:  # Back sign #FJ added this line
-                                keypress.back()
+                                if downclickright == False:
+                                    clickDown(int(Xpos), int(Ypos))
+                                    downclickright = True
+                                ctypes.windll.user32.SetCursorPos(int(Xpos), int(Ypos))
+
+                            if hand_sign_id != 4 and downclickright == True: #FJ added this line
+                                clickRightUp(int(Xpos), int(Ypos))
+                                downclickright = False
+
                             if hand_sign_id == 5:  # RocknRoll sign #FJ added this line
                                 currentPosX, currentPosY = win32api.GetCursorPos()
                                 win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, currentPosX, currentPosY, 50, 0)
@@ -338,16 +355,16 @@ def main():
 
 
                 # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
-                debug_image = draw_info_text(
-                    debug_image,
-                    brect,
-                    handedness,
-                    keypoint_classifier_labels[hand_sign_id],
-                    point_history_classifier_labels[most_common_fg_id[0][0]],
-                    skelett_history_classifier_labels[most_common_skelett_id[0][0]],
-                )
+                # debug_image = draw_bounding_rect(use_brect, debug_image, brect)
+                # debug_image = draw_landmarks(debug_image, landmark_list)
+                # debug_image = draw_info_text(
+                #     debug_image,
+                #     brect,
+                #     handedness,
+                #     keypoint_classifier_labels[hand_sign_id],
+                #     point_history_classifier_labels[most_common_fg_id[0][0]],
+                #     skelett_history_classifier_labels[most_common_skelett_id[0][0]],
+                # )
         else:
             point_history.append([0, 0])
             skelett_history.append([[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0]])#FJ
