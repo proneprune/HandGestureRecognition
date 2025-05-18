@@ -1,3 +1,42 @@
+# Hand gesture recognition thesis
+### by Fredrik Bjälå Ursäter & Jonathan Nilsson Cullgert
+This is a thesis done on hand gesture recognition to create a program that can control a device (PC) using hand gestures. This is based on the source code by Kazuhito Takahashi, the original readme for his project is found below.  [original repo](https://github.com/Kazuhito00/hand-gesture-recognition-using-mediapipe).
+
+#### Changes
+The major changes to this project can be found in the **Skelett** branch. In the main branch the original alpha prototype can be found in app.py. This code has not been edited very much. In the beta branch **Skelett**, all changes and additions made by us have been marked as "*By FJ*" or something similar.
+
+#### What it does
+The alpha prototype works as a proof of concept and can control the device using static gestures. They can be found below. The beta prototype can be controlled by gestures that are done by moving the hand. This is done by storing 16 frames in a dequeue that is then trained using mainly the LSTM layer in the neural network.
+
+#### Static Gestures
+- open hand - do nothing
+- closed fist - left down click
+- index finger - mouse control
+- ok sign - marking and mouse control
+- not ok sign - release the marking
+- backhand - right click down
+- rock n roll - scroll up
+- C - 'Ctrl + C' to copy
+- V/peace sign - 'Ctrl + V' to paste
+
+#### Moving Gestures
+- rotate - 'alt + tab' to switch tabs
+- reverse pinch - zoom in
+- ringing telephone - zoom out
+- back - 'alt + back' to go back
+- hand talking - mute
+- wave - open the web (linkedin)
+- basketball toss - volume up
+-  basketball bounce - volume down
+- finger gun - 'esc' or turn off the program
+
+##### Acknowledgments
+Big thanks to Kazuhito Takahashi for providing this program under the apache license.
+
+
+
+
+
 # hand-gesture-recognition-using-mediapipe
 Estimate hand pose using MediaPipe (Python version).<br> This is a sample 
 program that recognizes hand signs and finger gestures with a simple MLP using the detected key points.
